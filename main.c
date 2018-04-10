@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     if ( child == 0 ) {
         fprintf(stderr, "I am child process\n");
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        execl(argv[1], argv[1], NULL);
+        execve(argv[1], NULL, NULL);
     } else {
         while (1) {
             fprintf(stderr, "Before wait\n");
