@@ -72,6 +72,15 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/micha/Dokumenty/hshare/include/alienos.h">
+			<Option target="emu"/>
+		</Unit>
+		<Unit filename="/home/micha/Dokumenty/hshare/include/debug.h">
+			<Option target="emu"/>
+		</Unit>
+		<Unit filename="/home/micha/Dokumenty/hshare/include/display.h">
+			<Option target="emu"/>
+		</Unit>
 		<Unit filename="/home/micha/Dokumenty/hshare/src/debug.c">
 			<Option target="emu"/>
 		</Unit>

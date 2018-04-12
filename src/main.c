@@ -14,17 +14,6 @@
 #include "../include/debug.h"
 #include "../include/display.h"
 
-#define ALIENOS_END 0
-#define ALIENOS_GETRAND 1
-#define ALIENOS_GETKEY 2
-#define ALIENOS_PRINT 3
-#define ALIENOS_SETCURSOR 4
-
-int read_char() {
-    // TODO, returns key up
-    return KEY_UP;
-}
-
 int main(int argc, char **argv) {
     pid_t child;
     struct user_regs_struct regs;
@@ -36,8 +25,6 @@ int main(int argc, char **argv) {
     void* localv;
     struct iovec local_cpy;
     struct iovec remote_cpy;
-
-    display_init();
 
     child = fork();
 
@@ -54,6 +41,9 @@ int main(int argc, char **argv) {
             exit(1);
         }
     } else {
+        if (display_init() != 0 ) {
+            goto fail;
+        }
         while (1) {
             wait(&status);
             if (WIFEXITED(status)) {
@@ -69,22 +59,22 @@ int main(int argc, char **argv) {
                 enter = 1;
                 switch (regs.orig_rax) {
                     case -1:
-                        debug("Error %d\n", errno);
-                        exit(1);
-                        break;
+                        goto fail;
                     case ALIENOS_END:
                         debug("End with status %llu\n", regs.rdi);
-                        exit((int) regs.rdi);
-                        break;
+                        exit_status = regs.rdi;
+                        goto winclose;
                     case ALIENOS_GETRAND:
                         debug("Get rand, return as RAX");
                         // TODO
                         break;
                     case ALIENOS_GETKEY:
                         debug("Get key\n");
-                        int c = read_char();
-                        // TODO
-                        r = ptrace(PTRACE_POKEUSER, child, ORIG_RAX * 8, c);
+                        int c;
+                        if (display_read_char(&c) != 0) {
+                            goto fail;
+                        }
+                        r = ptrace(PTRACE_POKEUSER, child, RAX * 8, c);
                         if ( r == -1 ) {
                             goto fail;
                         }
@@ -102,7 +92,7 @@ int main(int argc, char **argv) {
                         break;
                     case ALIENOS_SETCURSOR:
                         debug("Set cursor(x=%llu, y=%llu)\n", regs.rdi, regs.rsi);
-                        // TODO
+                        display_move_cursor((int) regs.rdi, (int) regs.rsi);
                         break;
                     case 59:
                         if (was_execve == 0) {

@@ -6,5 +6,5 @@ include_directories(${ZSO1718_1_SOURCE_DIR}/include)
 
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
-add_executable(emu src/main.c src/display.c src/debug.c)
+add_executable(emu src/main.c src/display.c src/debug.c include/alienos.h include/debug.h include/display.h)
 target_link_libraries(emu ${CURSES_LIBRARIES})
