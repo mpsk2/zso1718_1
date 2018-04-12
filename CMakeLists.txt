@@ -1,6 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
-project(emu C)
+cmake_minimum_required(VERSION 3.5.1)
+project(ZSO1718_1)
 
-set(CMAKE_C_STANDARD 11)
+include_directories(${ZSO1718_1_SOURCE_DIR}/src)
+include_directories(${ZSO1718_1_SOURCE_DIR}/include)
 
-add_executable(emu main.c alienos.h)
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
+add_executable(emu src/main.c src/display.c src/debug.c)
+target_link_libraries(emu ${CURSES_LIBRARIES})
