@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
             debug("ptrace PTRACE_TRACEME fails with %d\n", errno);
             exit(1);
         }
-        r = execlp("./hello", "hello", NULL);
+        r = execlp("./prog", "prog", NULL);
         if (r == -1) {
             debug("execv fails with %d\n", errno);
             exit(1);
@@ -156,8 +156,14 @@ int main(int argc, char **argv) {
                         exit_status = regs.rdi;
                         goto winclose;
                     case ALIENOS_GETRAND:
-                        debug("Get rand, return as RAX");
-                        // TODO
+                        debug("Get rand, return as RAX\n");
+                        int n = 42;
+
+                        local_cpy.iov_base = &n;
+                        local_cpy.iov_len = sizeof(int);
+                        remote_cpy.iov_base = (void*) regs.rax;
+                        remote_cpy.iov_len = local_cpy.iov_len;
+                        process_vm_writev(child, &local_cpy, 1, &remote_cpy, 1, 0);
                         break;
                     case ALIENOS_GETKEY:
                         debug("Get key\n");
