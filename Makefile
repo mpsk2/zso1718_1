@@ -1,2 +1,14 @@
-emu:
-	gcc -Wall -lncurses --std=c11 -O2 src/debug.c src/display.c src/main.c -o emu
+CFLAGS=-O2 -Wall -pedantic --std=c11
+LDFLAGS=-lncurses
+DEPS = alienos.h debug. display.h
+OBJ = debug.o display.o main.o
+
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+emu: $(OBJ)
+	gcc -o $@ $^ $(LDFLAGS)
+
+clean:
+	rm emu
+	rm *.o
