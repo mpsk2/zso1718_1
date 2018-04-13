@@ -1,3 +1,4 @@
+#include <time.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -119,7 +120,7 @@ int main(int argc, char **argv) {
             debug("ptrace PTRACE_TRACEME fails with %d\n", errno);
             exit(1);
         }
-        r = execlp("./prog", "prog", NULL);
+        r = execl(argv[1], argv[1], NULL);
         if (r == -1) {
             debug("execv fails with %d\n", errno);
             exit(1);
@@ -135,15 +136,14 @@ int main(int argc, char **argv) {
         if (display_init() != 0 ) {
             goto fail;
         }
+        srand((unsigned int) time(NULL));
         while (1) {
             wait(&status);
             if (WIFEXITED(status)) {
-                debug("Break by status\n");
                 break;
             }
             r = ptrace(PTRACE_GETREGS, child, NULL, &regs);
             if (r == -1) {
-                debug("ptrace PTRACE_PEEKUSER fails with %d\n", errno);
                 exit(1);
             }
             if (enter == 0) {
@@ -157,13 +157,11 @@ int main(int argc, char **argv) {
                         goto winclose;
                     case ALIENOS_GETRAND:
                         debug("Get rand, return as RAX\n");
-                        int n = 42;
-
-                        local_cpy.iov_base = &n;
-                        local_cpy.iov_len = sizeof(int);
-                        remote_cpy.iov_base = (void*) regs.rax;
-                        remote_cpy.iov_len = local_cpy.iov_len;
-                        process_vm_writev(child, &local_cpy, 1, &remote_cpy, 1, 0);
+                        uint32_t n = (uint32_t) rand();
+                        r = ptrace(PTRACE_POKEUSER, child, RAX * 8, n);
+                        if ( r == -1 ) {
+                            goto fail;
+                        }
                         break;
                     case ALIENOS_GETKEY:
                         debug("Get key\n");
@@ -171,8 +169,7 @@ int main(int argc, char **argv) {
                         if (display_read_char(&c) != 0) {
                             goto fail;
                         }
-                        r = ptrace(PTRACE_POKEUSER, child, RAX
-                                                           * 8, c);
+                        r = ptrace(PTRACE_POKEUSER, child, RAX * 8, c);
                         if ( r == -1 ) {
                             goto fail;
                         }

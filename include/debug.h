@@ -10,5 +10,5 @@ int debug(const char *__restrict __format, ...);
 #endif //ZSO1718_1_DEBUG_// H
 
 #ifndef DEBUG
-#define DEBUG 0
+#define DEBUG 1
 #endif
