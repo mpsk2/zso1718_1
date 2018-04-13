@@ -1,6 +1,6 @@
-CFLAGS=-O2 -Wall -pedantic --std=c11
+CFLAGS=-O2 -Wall -pedantic --std=c11 -DDEBUG=1
 LDFLAGS=-lncurses
-DEPS = alienos.h debug. display.h
+DEPS = alienos.h debug.h display.h
 OBJ = debug.o display.o main.o
 
 %.o: %.c $(DEPS)

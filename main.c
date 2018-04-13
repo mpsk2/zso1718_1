@@ -16,6 +16,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#include <linux/random.h>
 
 #include "alienos.h"
 #include "debug.h"
@@ -112,6 +115,12 @@ int main(int argc, char **argv) {
     long r;
     int exit_status = EXIT_SUCCESS;
 
+    int ret;
+    ret = prctl (PR_SET_PDEATHSIG, SIGUSR1);
+    if (ret != 0) {
+        goto fail;
+    }
+
     child = fork();
 
     if (child == 0) {
@@ -156,8 +165,8 @@ int main(int argc, char **argv) {
                         exit_status = regs.rdi;
                         goto winclose;
                     case ALIENOS_GETRAND:
-                        debug("Get rand, return as RAX\n");
-                        uint32_t n = 42;
+                        debug("");
+                        uint32_t n = rand();
                         r = ptrace(PTRACE_POKEUSER, child, RAX * 8, n);
                         if ( r == -1 ) {
                             goto fail;
@@ -176,7 +185,7 @@ int main(int argc, char **argv) {
                         enter = 0;
                         break;
                     case ALIENOS_PRINT:
-                        debug("print(x=%llu, y=%llu)\n", regs.rdi, regs.rsi);
+                        debug("print(x=%llu, y=%llu, len=%llu)\n", regs.rdi, regs.rsi, regs.r10);
                         localv = malloc(sizeof(uint16_t) * regs.r10);
                         local_cpy.iov_base = localv;
                         local_cpy.iov_len = sizeof(uint16_t) * regs.r10;

@@ -87,21 +87,13 @@ int display_show(int x, int y, uint16_t *text, int len) {
     int old_y;
 
     getyx((WINDOW *) stdscr, old_y, old_x);
-    if (
-            (y + len - 1 >= 80) ||
-            (y < 0) ||
-            (x < 0) ||
-            (x >= 24)
-            ) {
-        errno = EINVAL;
-        return -1;
-    }
     for (int i = 0; i < len; i++) {
         struct my_char *c = (struct my_char *) text;
         c->color_and_nothing %= 16;
+        debug("print y %d, x + i %d,  %c of %u\n", y, x + i, c->ch, c->color_and_nothing);
         if (colors_set)
             attron(COLOR_PAIR(c->color_and_nothing + 1));
-        mvprintw(y, x + i, "%c", c->ch);
+        mvaddch(y, x + i, c->ch);
         if (colors_set)
             attroff(COLOR_PAIR(c->color_and_nothing + 1));
         text += 1;
@@ -112,16 +104,6 @@ int display_show(int x, int y, uint16_t *text, int len) {
 }
 
 int display_move_cursor(int x, int y) {
-
-    if (
-            (y >= 80) ||
-            (y < 0) ||
-            (x < 0) ||
-            (x >= 24)
-            ) {
-        errno = EINVAL;
-        return -1;
-    }
     return move(y, x);
 }
 
@@ -151,6 +133,7 @@ int display_read_char(int *ch) {
             }
             goto read_char_fail;
     }
+    debug("Code is %x\n", *ch);
     return 0;
 read_char_fail:
     errno = EINVAL;
