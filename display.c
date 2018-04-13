@@ -6,9 +6,9 @@
 #include <ncurses.h>
 #include <errno.h>
 #include <unistd.h>
-#include "../include/alienos.h"
-#include "../include/display.h"
-#include "../include/debug.h"
+#include "alienos.h"
+#include "display.h"
+#include "debug.h"
 
 #define COLOR_MAKE(x) ((x) * 1000 / 255)
 

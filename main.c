@@ -1,4 +1,5 @@
-#include <time.h>
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -16,9 +17,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "../include/alienos.h"
-#include "../include/debug.h"
-#include "../include/display.h"
+#include "alienos.h"
+#include "debug.h"
+#include "display.h"
 
 int change_elf(pid_t child, int argc, char **argv) {
     int r = 0;
@@ -136,7 +137,6 @@ int main(int argc, char **argv) {
         if (display_init() != 0 ) {
             goto fail;
         }
-        srand((unsigned int) time(NULL));
         while (1) {
             wait(&status);
             if (WIFEXITED(status)) {
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
                         goto winclose;
                     case ALIENOS_GETRAND:
                         debug("Get rand, return as RAX\n");
-                        uint32_t n = (uint32_t) rand();
+                        uint32_t n = 42;
                         r = ptrace(PTRACE_POKEUSER, child, RAX * 8, n);
                         if ( r == -1 ) {
                             goto fail;
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
                         debug("Set cursor(x=%llu, y=%llu)\n", regs.rdi, regs.rsi);
                         display_move_cursor((int) regs.rdi, (int) regs.rsi);
                         break;
-                    case 59:
+                    case SYS_execve:
                         if (change_elf(child, argc, argv) != 0) {
                             goto fail;
                         }

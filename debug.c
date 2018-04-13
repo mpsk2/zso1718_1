@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include "../include/debug.h"
+#include "debug.h"
 
 
 int debug(const char *__restrict __format, ...) {
