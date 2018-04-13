@@ -29,17 +29,16 @@ static void make_color() {
         const short lightyellow = 26;
         colors_set = true;
 
-        init_color(turquoise, COLOR_MAKE(64), COLOR_MAKE(224), COLOR_MAKE(208));
-        init_color(pink, COLOR_MAKE(255), COLOR_MAKE(192), COLOR_MAKE(203));
-        init_color(lightgray, COLOR_MAKE(211), COLOR_MAKE(211), COLOR_MAKE(211));
-        init_color(darkgray, COLOR_MAKE(169), COLOR_MAKE(169), COLOR_MAKE(169));
-
-        init_color(lightblue, COLOR_MAKE(173), COLOR_MAKE(216), COLOR_MAKE(230));
-        init_color(lightgreen, COLOR_MAKE(144), COLOR_MAKE(238), COLOR_MAKE(144));
+        init_color(turquoise,      COLOR_MAKE( 64), COLOR_MAKE(224), COLOR_MAKE(208));
+        init_color(pink,           COLOR_MAKE(255), COLOR_MAKE(192), COLOR_MAKE(203));
+        init_color(lightgray,      COLOR_MAKE(211), COLOR_MAKE(211), COLOR_MAKE(211));
+        init_color(darkgray,       COLOR_MAKE(169), COLOR_MAKE(169), COLOR_MAKE(169));
+        init_color(lightblue,      COLOR_MAKE(173), COLOR_MAKE(216), COLOR_MAKE(230));
+        init_color(lightgreen,     COLOR_MAKE(144), COLOR_MAKE(238), COLOR_MAKE(144));
         init_color(lightturquoise, COLOR_MAKE(175), COLOR_MAKE(238), COLOR_MAKE(238));
-        init_color(lightred, COLOR_MAKE(255), COLOR_MAKE(160), COLOR_MAKE(122));
-        init_color(lightpink, COLOR_MAKE(255), COLOR_MAKE(182), COLOR_MAKE(203));
-        init_color(lightyellow, COLOR_MAKE(255), COLOR_MAKE(255), COLOR_MAKE(224));
+        init_color(lightred,       COLOR_MAKE(255), COLOR_MAKE(160), COLOR_MAKE(122));
+        init_color(lightpink,      COLOR_MAKE(255), COLOR_MAKE(182), COLOR_MAKE(203));
+        init_color(lightyellow,    COLOR_MAKE(255), COLOR_MAKE(255), COLOR_MAKE(224));
 
         debug("Has colors\n");
         init_pair(1,  COLOR_BLACK,     COLOR_WHITE);
