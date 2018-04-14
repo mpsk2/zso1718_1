@@ -109,13 +109,19 @@ int main(int argc, char **argv) {
 
     if (child == 0) {
         // CHILD!!
+        r = prctl(PR_SET_PDEATHSIG, SIGHUP);
+        if (r != 0) {
+            perror("Failed to make child die with parent");
+            exit(EXIT_FAILURE);
+        }
+
         r = ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        if (r == -1) {
+        if (r != 0) {
             perror("Failed to ptrace child process.");
             exit(EXIT_FAILURE);
         }
         r = execl(argv[1], argv[1], NULL);
-        if (r == -1) {
+        if (r != 0) {
             perror("Failed to execl child process.");
             exit(EXIT_FAILURE);
         }
