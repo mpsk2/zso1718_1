@@ -1,3 +1,10 @@
+//
+// Michał Piotr Stankiewicz
+// ms335789
+// Zadanie zaliczeniowe ZSO 2017 / 2018
+// Zadanie numer 1
+//
+
 #define _GNU_SOURCE
 
 #include <stdlib.h>
@@ -47,8 +54,8 @@ int change_elf(pid_t child, int argc, char **argv) {
         goto change_elf_file_close_end;
     }
 
-    Elf64_Ehdr *ehdr = (Elf64_Ehdr*) p;
-    Elf64_Phdr *phdr = (Elf64_Phdr*) (p + ehdr->e_phoff);
+    Elf64_Ehdr *ehdr = (Elf64_Ehdr *) p;
+    Elf64_Phdr *phdr = (Elf64_Phdr * )(p + ehdr->e_phoff);
     int phnum = ehdr->e_phnum;
 
     for (int i = 0; i < phnum; i++) {
@@ -83,11 +90,11 @@ int change_elf(pid_t child, int argc, char **argv) {
           phdr[found].p_align
     );
 
-    int32_t* localv;
+    int32_t *localv;
     struct iovec local_cpy;
     struct iovec remote_cpy;
 
-    localv = (int32_t*) malloc(phdr[found].p_memsz);
+    localv = (int32_t *) malloc(phdr[found].p_memsz);
 
     for (int i = 0; (i < phdr[found].p_memsz / 4) && (i < argc - 2); i++) {
         int32_t n = (int32_t) strtoll(argv[i + 2], NULL, 10);
@@ -96,15 +103,15 @@ int change_elf(pid_t child, int argc, char **argv) {
 
     local_cpy.iov_base = localv;
     local_cpy.iov_len = phdr[found].p_memsz;
-    remote_cpy.iov_base = (void*) phdr[found].p_paddr;
+    remote_cpy.iov_base = (void *) phdr[found].p_paddr;
     remote_cpy.iov_len = local_cpy.iov_len;
     process_vm_writev(child, &local_cpy, 1, &remote_cpy, 1, 0);
 
-change_elf_p_end:
+    change_elf_p_end:
     munmap(p, (size_t) st.st_size);
-change_elf_file_close_end:
+    change_elf_file_close_end:
     close(f);
-change_elf_end:
+    change_elf_end:
     return r;
 }
 
@@ -114,7 +121,7 @@ int main(int argc, char **argv) {
     int exit_status = EXIT_SUCCESS;
 
     int ret;
-    ret = prctl (PR_SET_PDEATHSIG, SIGUSR1);
+    ret = prctl(PR_SET_PDEATHSIG, SIGUSR1);
     if (ret != 0) {
         goto fail;
     }
@@ -134,14 +141,13 @@ int main(int argc, char **argv) {
             exit(1);
         }
     } else {
-        void* localv;
+        void *localv;
         struct iovec local_cpy;
         struct iovec remote_cpy;
         int was_execve = 0;
-        int enter = 0;
         int status;
         struct user_regs_struct regs;
-        if (display_init() != 0 ) {
+        if (display_init() != 0) {
             goto fail;
         }
         while (1) {
@@ -153,71 +159,66 @@ int main(int argc, char **argv) {
             if (r == -1) {
                 exit(1);
             }
-            if (enter == 0) {
-                enter = 1;
-                switch (regs.orig_rax) {
-                    case -1:
+            switch (regs.orig_rax) {
+                case -1:
+                    goto fail;
+                case ALIENOS_END:
+                    debug("End with status %llu\n", regs.rdi);
+                    exit_status = regs.rdi;
+                    goto winclose;
+                case ALIENOS_GETRAND:
+                    debug("");
+                    uint32_t n = rand();
+                    r = ptrace(PTRACE_POKEUSER, child, RAX * 8, n);
+                    if (r == -1) {
                         goto fail;
-                    case ALIENOS_END:
-                        debug("End with status %llu\n", regs.rdi);
-                        exit_status = regs.rdi;
-                        goto winclose;
-                    case ALIENOS_GETRAND:
-                        debug("");
-                        uint32_t n = rand();
-                        r = ptrace(PTRACE_POKEUSER, child, RAX * 8, n);
-                        if ( r == -1 ) {
-                            goto fail;
-                        }
-                        break;
-                    case ALIENOS_GETKEY:
-                        debug("Get key\n");
-                        int c;
-                        if (display_read_char(&c) != 0) {
-                            goto fail;
-                        }
-                        r = ptrace(PTRACE_POKEUSER, child, RAX * 8, c);
-                        if ( r == -1 ) {
-                            goto fail;
-                        }
-                        enter = 0;
-                        break;
-                    case ALIENOS_PRINT:
-                        debug("print(x=%llu, y=%llu, len=%llu)\n", regs.rdi, regs.rsi, regs.r10);
-                        localv = malloc(sizeof(uint16_t) * regs.r10);
-                        local_cpy.iov_base = localv;
-                        local_cpy.iov_len = sizeof(uint16_t) * regs.r10;
-                        remote_cpy.iov_base = (void*) regs.rdx;
-                        remote_cpy.iov_len = local_cpy.iov_len;
-                        process_vm_readv(child, &local_cpy, 1, &remote_cpy, 1, 0);
-                        display_show(regs.rdi, regs.rsi, (uint16_t*) localv, regs.r10);
-                        free(localv);
-                        break;
-                    case ALIENOS_SETCURSOR:
-                        debug("Set cursor(x=%llu, y=%llu)\n", regs.rdi, regs.rsi);
-                        display_move_cursor((int) regs.rdi, (int) regs.rsi);
-                        break;
-                    case SYS_execve:
-                        if (change_elf(child, argc, argv) != 0) {
-                            goto fail;
-                        }
-                        if (was_execve == 0) {
-                            was_execve = 1;
-                        } else {
-                            errno = EINVAL;
-                            goto fail;
-                        }
-                        break;
-                    default:
-                        debug("Unknown %llu\n", regs.rax);
-                }
-            } else {
-                if (was_execve == 1) {
-                    was_execve = 2;
-                }
-                enter = 0;
+                    }
+                    break;
+                case ALIENOS_GETKEY:
+                    debug("Get key\n");
+                    int c;
+                    if (display_read_char(&c) != 0) {
+                        goto fail;
+                    }
+                    r = ptrace(PTRACE_POKEUSER, child, RAX * 8, c);
+                    if (r == -1) {
+                        goto fail;
+                    }
+                    break;
+                case ALIENOS_PRINT:
+                    debug("print(x=%llu, y=%llu, len=%llu)\n", regs.rdi, regs.rsi, regs.r10);
+                    localv = malloc(sizeof(uint16_t) * regs.r10);
+                    local_cpy.iov_base = localv;
+                    local_cpy.iov_len = sizeof(uint16_t) * regs.r10;
+                    remote_cpy.iov_base = (void *) regs.rdx;
+                    remote_cpy.iov_len = local_cpy.iov_len;
+                    process_vm_readv(child, &local_cpy, 1, &remote_cpy, 1, 0);
+                    display_show(regs.rdi, regs.rsi, (uint16_t *) localv, regs.r10);
+                    free(localv);
+                    break;
+                case ALIENOS_SETCURSOR:
+                    debug("Set cursor(x=%llu, y=%llu)\n", regs.rdi, regs.rsi);
+                    display_move_cursor((int) regs.rdi, (int) regs.rsi);
+                    break;
+                case SYS_execve:
+                    if (change_elf(child, argc, argv) != 0) {
+                        goto fail;
+                    }
+                    if (was_execve == 0) {
+                        was_execve = 1;
+                    } else {
+                        errno = EINVAL;
+                        goto fail;
+                    }
+
+                    break;
+                default:
+                    debug("Unknown %llu\n", regs.rax);
+                    errno = EPERM;
+                    goto fail;
             }
-            r = ptrace(PTRACE_SYSCALL, child, NULL, NULL);
+
+            r = ptrace(regs.orig_rax == SYS_execve ? PTRACE_SYSCALL : PTRACE_SYSEMU, child, NULL, NULL);
             if (r == -1) {
                 goto fail;
             }

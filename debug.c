@@ -1,5 +1,8 @@
 //
-// Created by micha on 12.04.18.
+// Michał Piotr Stankiewicz
+// ms335789
+// Zadanie zaliczeniowe ZSO 2017 / 2018
+// Zadanie numer 1
 //
 
 #include <stdio.h>
