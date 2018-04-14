@@ -28,6 +28,10 @@
 #include <sys/syscall.h>
 #include <linux/random.h>
 
+#ifndef SYS_getrandom
+#define SYS_getrandom 318
+#endif
+
 #include "alienos.h"
 #include "debug.h"
 #include "display.h"
@@ -78,6 +82,10 @@ int change_elf(pid_t child, int argc, char **argv) {
 
     for (int i = 0; (i < phdr[found].p_memsz / 4) && (i < argc - 2); i++) {
         int32_t n = (int32_t) strtoll(argv[i + 2], NULL, 10);
+        if ((errno == EINVAL) || (errno == ERANGE)) {
+            r = 1;
+            goto change_elf_p_end;
+        }
         localv[i] = n;
     }
 
@@ -85,7 +93,9 @@ int change_elf(pid_t child, int argc, char **argv) {
     local_cpy.iov_len = phdr[found].p_memsz;
     remote_cpy.iov_base = (void *) phdr[found].p_paddr;
     remote_cpy.iov_len = local_cpy.iov_len;
-    process_vm_writev(child, &local_cpy, 1, &remote_cpy, 1, 0);
+    if (process_vm_writev(child, &local_cpy, 1, &remote_cpy, 1, 0) == -1) {
+        r = 1;
+    }
 
 change_elf_p_end:
     munmap(p, (size_t) st.st_size);
@@ -179,7 +189,10 @@ int main(int argc, char **argv) {
                     local_cpy.iov_len = sizeof(uint16_t) * regs.r10;
                     remote_cpy.iov_base = (void *) regs.rdx;
                     remote_cpy.iov_len = local_cpy.iov_len;
-                    process_vm_readv(child, &local_cpy, 1, &remote_cpy, 1, 0);
+                    r = process_vm_readv(child, &local_cpy, 1, &remote_cpy, 1, 0);
+                    if (r == -1) {
+                        goto fail;
+                    }
                     display_show(regs.rdi, regs.rsi, (uint16_t *) localv, regs.r10);
                     free(localv);
                     break;
