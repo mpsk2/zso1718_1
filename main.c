@@ -29,6 +29,7 @@
 #include <linux/random.h>
 
 #include "alienos.h"
+#include "debug.h"
 #include "display.h"
 
 int change_elf(pid_t child, int argc, char **argv) {
@@ -133,6 +134,8 @@ int main(int argc, char **argv) {
         int status;
         struct user_regs_struct regs;
         int c;
+        size_t length = 5;
+        unsigned char buf[length];
         uint32_t n;
         if (display_init() != 0) {
             goto fail;
@@ -146,6 +149,7 @@ int main(int argc, char **argv) {
             if (r == -1) {
                 exit(1);
             }
+            debug ("%d\n", regs.orig_rax);
             switch (regs.orig_rax) {
                 case -1:
                     goto fail;
@@ -153,7 +157,8 @@ int main(int argc, char **argv) {
                     exit_status = regs.rdi;
                     goto winclose;
                 case ALIENOS_GETRAND:
-                    n = rand();
+                    syscall(SYS_getrandom, buf, length, 0);
+                    n = (uint32_t) (buf[0] + buf[1] * 0x10 + buf[2] * 0x100 + buf[3] * 0x1000);
                     r = ptrace(PTRACE_POKEUSER, child, RAX * 8, n);
                     if (r == -1) {
                         goto fail;
