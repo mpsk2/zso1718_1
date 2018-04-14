@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
     goto winclose;
 
 fail:
-    exit_status = EXIT_FAILURE;
+    exit_status = FAILURE_CODE;
 winclose:
     display_close();
     exit(exit_status);
