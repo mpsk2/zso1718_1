@@ -113,7 +113,9 @@ int display_show(int x, int y, uint16_t *text, int len) {
 }
 
 int display_move_cursor(int x, int y) {
-    return move(y, x);
+    int r = move(y, x);
+    refresh();
+    return r;
 }
 
 int display_read_char(int *ch) {
