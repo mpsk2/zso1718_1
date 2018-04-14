@@ -29,7 +29,6 @@
 #include <linux/random.h>
 
 #include "alienos.h"
-#include "debug.h"
 #include "display.h"
 
 int change_elf(pid_t child, int argc, char **argv) {
@@ -70,26 +69,6 @@ int change_elf(pid_t child, int argc, char **argv) {
         goto change_elf_p_end;
     }
 
-    debug("Section number is %d\n"
-          "\ttype: %x\n"
-          "\tflags: %x\n"
-          "\toffset: %x\n"
-          "\tpaddr: %x\n"
-          "\tfilesz: %x\n"
-          "\tmemsz: %x\n"
-          "\t\tArguments number %d\n"
-          "\talign: %x\n",
-          found,
-          phdr[found].p_type,
-          phdr[found].p_flags,
-          phdr[found].p_offset,
-          phdr[found].p_paddr,
-          phdr[found].p_filesz,
-          phdr[found].p_memsz,
-          phdr[found].p_memsz / 4,
-          phdr[found].p_align
-    );
-
     int32_t *localv;
     struct iovec local_cpy;
     struct iovec remote_cpy;
@@ -107,11 +86,11 @@ int change_elf(pid_t child, int argc, char **argv) {
     remote_cpy.iov_len = local_cpy.iov_len;
     process_vm_writev(child, &local_cpy, 1, &remote_cpy, 1, 0);
 
-    change_elf_p_end:
+change_elf_p_end:
     munmap(p, (size_t) st.st_size);
-    change_elf_file_close_end:
+change_elf_file_close_end:
     close(f);
-    change_elf_end:
+change_elf_end:
     return r;
 }
 
@@ -132,13 +111,13 @@ int main(int argc, char **argv) {
         // CHILD!!
         r = ptrace(PTRACE_TRACEME, 0, NULL, NULL);
         if (r == -1) {
-            debug("ptrace PTRACE_TRACEME fails with %d\n", errno);
-            exit(1);
+            perror("Failed to ptrace child process.");
+            exit(EXIT_FAILURE);
         }
         r = execl(argv[1], argv[1], NULL);
         if (r == -1) {
-            debug("execv fails with %d\n", errno);
-            exit(1);
+            perror("Failed to execl child process.");
+            exit(EXIT_FAILURE);
         }
     } else {
         void *localv;
@@ -147,6 +126,8 @@ int main(int argc, char **argv) {
         int was_execve = 0;
         int status;
         struct user_regs_struct regs;
+        int c;
+        uint32_t n;
         if (display_init() != 0) {
             goto fail;
         }
@@ -163,20 +144,16 @@ int main(int argc, char **argv) {
                 case -1:
                     goto fail;
                 case ALIENOS_END:
-                    debug("End with status %llu\n", regs.rdi);
                     exit_status = regs.rdi;
                     goto winclose;
                 case ALIENOS_GETRAND:
-                    debug("");
-                    uint32_t n = rand();
+                    n = rand();
                     r = ptrace(PTRACE_POKEUSER, child, RAX * 8, n);
                     if (r == -1) {
                         goto fail;
                     }
                     break;
                 case ALIENOS_GETKEY:
-                    debug("Get key\n");
-                    int c;
                     if (display_read_char(&c) != 0) {
                         goto fail;
                     }
@@ -186,7 +163,6 @@ int main(int argc, char **argv) {
                     }
                     break;
                 case ALIENOS_PRINT:
-                    debug("print(x=%llu, y=%llu, len=%llu)\n", regs.rdi, regs.rsi, regs.r10);
                     localv = malloc(sizeof(uint16_t) * regs.r10);
                     local_cpy.iov_base = localv;
                     local_cpy.iov_len = sizeof(uint16_t) * regs.r10;
@@ -197,23 +173,24 @@ int main(int argc, char **argv) {
                     free(localv);
                     break;
                 case ALIENOS_SETCURSOR:
-                    debug("Set cursor(x=%llu, y=%llu)\n", regs.rdi, regs.rsi);
                     display_move_cursor((int) regs.rdi, (int) regs.rsi);
                     break;
                 case SYS_execve:
-                    if (change_elf(child, argc, argv) != 0) {
-                        goto fail;
-                    }
                     if (was_execve == 0) {
                         was_execve = 1;
                     } else {
-                        errno = EINVAL;
+                        perror("Child process called SYS_execve more than once");
+                        errno = EPERM;
+                        goto fail;
+                    }
+
+                    if (change_elf(child, argc, argv) != 0) {
                         goto fail;
                     }
 
                     break;
                 default:
-                    debug("Unknown %llu\n", regs.rax);
+                    perror("Unknown operation");
                     errno = EPERM;
                     goto fail;
             }
@@ -227,7 +204,6 @@ int main(int argc, char **argv) {
     goto winclose;
 
 fail:
-    debug("fail to do operation with errno=%d\n", errno);
     exit_status = EXIT_FAILURE;
 winclose:
     display_close();
