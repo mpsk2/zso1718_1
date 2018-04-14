@@ -50,9 +50,6 @@ int change_elf(pid_t child, int argc, char **argv) {
     Elf64_Phdr *phdr = (Elf64_Phdr*) (p + ehdr->e_phoff);
     int phnum = ehdr->e_phnum;
 
-    Elf64_Phdr *ph_strtab = &phdr[ehdr->e_phentsize];
-    const char *const ph_strtab_p = p + ph_strtab->p_offset;
-
     for (int i = 0; i < phnum; i++) {
         if (phdr[i].p_type == PT_PARAMS) {
             found = i;
