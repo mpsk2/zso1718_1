@@ -159,7 +159,6 @@ int main(int argc, char **argv) {
             if (r == -1) {
                 exit(1);
             }
-            debug ("%d\n", regs.orig_rax);
             switch (regs.orig_rax) {
                 case -1:
                     goto fail;

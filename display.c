@@ -13,59 +13,52 @@
 #include "display.h"
 #include "debug.h"
 
-#define COLOR_MAKE(x) ((x) * 1000 / 255)
-
-const short turquoise = 17;
-const short pink = 18;
-const short lightgray = 19;
-const short darkgray = 20;
-const short lightblue = 21;
-const short lightgreen = 22;
-const short lightturquoise = 23;
-const short lightred = 24;
-const short lightpink = 25;
-const short lightyellow = 26;
-
 #ifndef BG_COLOR
-const short background_color = COLOR_BLACK;
-#else
-const short background_color = BG_COLOR;
+#define BG_COLOR COLOR_WHITE
+#endif
+
+#ifndef HAS_COLOR
+#define HAS_COLOR 1
 #endif
 
 static bool colors_set;
 
+static int my_color(int n) {
+    switch (n) {
+        case 8:
+            return COLOR_PAIR(1) | A_BOLD;
+        case 9:
+            return COLOR_PAIR(1) | A_DIM;
+        case 10:
+            return COLOR_PAIR(2) | A_BOLD;
+        case 11:
+            return COLOR_PAIR(3) | A_BOLD;
+        case 12:
+            return COLOR_PAIR(4) | A_BOLD;
+        case 13:
+            return COLOR_PAIR(5) | A_BOLD;
+        case 14:
+            return COLOR_PAIR(6) | A_BOLD;
+        case 15:
+            return COLOR_PAIR(7) | A_BOLD;
+        default:
+            return COLOR_PAIR(n);
+    }
+}
+
 static void make_color() {
     start_color();
-    if (has_colors() && COLOR_PAIRS >= 16) {
+    if (has_colors() && (COLOR_PAIRS >= 16) && HAS_COLOR) {
         colors_set = true;
 
-        init_color(turquoise, COLOR_MAKE(64), COLOR_MAKE(224), COLOR_MAKE(208));
-        init_color(pink, COLOR_MAKE(255), COLOR_MAKE(192), COLOR_MAKE(203));
-        init_color(lightgray, COLOR_MAKE(211), COLOR_MAKE(211), COLOR_MAKE(211));
-        init_color(darkgray, COLOR_MAKE(169), COLOR_MAKE(169), COLOR_MAKE(169));
-        init_color(lightblue, COLOR_MAKE(173), COLOR_MAKE(216), COLOR_MAKE(230));
-        init_color(lightgreen, COLOR_MAKE(144), COLOR_MAKE(238), COLOR_MAKE(144));
-        init_color(lightturquoise, COLOR_MAKE(175), COLOR_MAKE(238), COLOR_MAKE(238));
-        init_color(lightred, COLOR_MAKE(255), COLOR_MAKE(160), COLOR_MAKE(122));
-        init_color(lightpink, COLOR_MAKE(255), COLOR_MAKE(182), COLOR_MAKE(203));
-        init_color(lightyellow, COLOR_MAKE(255), COLOR_MAKE(255), COLOR_MAKE(224));
-
-        init_pair(1, COLOR_BLACK, background_color);
-        init_pair(2, COLOR_BLUE, background_color);
-        init_pair(3, COLOR_GREEN, background_color);
-        init_pair(4, turquoise, background_color);
-        init_pair(5, COLOR_RED, background_color);
-        init_pair(6, pink, background_color);
-        init_pair(7, COLOR_YELLOW, background_color);
-        init_pair(8, lightgray, background_color);
-        init_pair(9, darkgray, COLOR_WHITE);
-        init_pair(10, lightblue, background_color);
-        init_pair(11, lightgreen, background_color);
-        init_pair(12, lightturquoise, COLOR_WHITE);
-        init_pair(13, lightred, background_color);
-        init_pair(14, lightpink, background_color);
-        init_pair(15, lightyellow, background_color);
-        init_pair(16, COLOR_WHITE, background_color);
+        init_pair(1, COLOR_BLACK, BG_COLOR);
+        init_pair(2, COLOR_BLUE, BG_COLOR);
+        init_pair(3, COLOR_GREEN, BG_COLOR);
+        init_pair(4, COLOR_CYAN, BG_COLOR);
+        init_pair(5, COLOR_RED, BG_COLOR);
+        init_pair(6, COLOR_MAGENTA, BG_COLOR);
+        init_pair(7, COLOR_YELLOW, BG_COLOR);
+        init_pair(16, COLOR_WHITE, BG_COLOR);
     } else {
         colors_set = false;
     }
@@ -101,10 +94,10 @@ int display_show(int x, int y, uint16_t *text, int len) {
         struct my_char *c = (struct my_char *) text;
         c->color_and_nothing %= 0x10;
         if (colors_set)
-            attron(COLOR_PAIR(c->color_and_nothing + 1));
+            attron(my_color(c->color_and_nothing + 1));
         mvaddch(y, x + i, c->ch);
         if (colors_set)
-            attroff(COLOR_PAIR(c->color_and_nothing + 1));
+            attroff(my_color(c->color_and_nothing + 1));
         text += 1;
     }
     move(old_y, old_x);
