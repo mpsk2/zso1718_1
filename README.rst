@@ -33,6 +33,7 @@ Do wstawiania (argumenty) informacji do pamięci dziecka używam process_vm_writ
 a do odczytywania (tekst do wyświetlenia) process_vm_readv.
 
 Wstawiając parametry do pamięci zakładam, że jest jedna sekcja .params i że są w takiej kolejności jak parametry podane.
+Jeżeli tej sekcji nie ma, to nie wstawiam, żadnych parametrów.
 
 Program powinien skończyć działanie gdy dostanie:
 

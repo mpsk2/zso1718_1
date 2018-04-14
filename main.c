@@ -59,7 +59,7 @@ int change_elf(pid_t child, int argc, char **argv) {
     }
 
     Elf64_Ehdr *ehdr = (Elf64_Ehdr *) p;
-    Elf64_Phdr *phdr = (Elf64_Phdr * )(p + ehdr->e_phoff);
+    Elf64_Phdr *phdr = (Elf64_Phdr *)(p + ehdr->e_phoff);
     int phnum = ehdr->e_phnum;
 
     for (int i = 0; i < phnum; i++) {
@@ -70,8 +70,7 @@ int change_elf(pid_t child, int argc, char **argv) {
     }
 
     if (found == -1) {
-        r = 1;
-        goto change_elf_p_end;
+        goto change_elf_file_close_end;
     }
 
     int32_t *localv;
