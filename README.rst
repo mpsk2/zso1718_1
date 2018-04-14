@@ -4,7 +4,8 @@ AlienOS symulator
 Instalacja
 ##########
 
-.. code: sh
+.. code:: sh
+
 	make
 
 powinno wystarczyć
@@ -32,6 +33,7 @@ Autor
 #####
 
 Michał Piotr Stankiewicz
-335789
+
+numer indeksu 335789
 
 
