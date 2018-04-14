@@ -14,7 +14,7 @@
 #include "debug.h"
 
 #ifndef BG_COLOR
-#define BG_COLOR COLOR_WHITE
+#define BG_COLOR COLOR_BLACK
 #endif
 
 #ifndef HAS_COLOR
