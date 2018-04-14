@@ -29,6 +29,20 @@ Jako tło pod literkami ustalam czarny kolor (można zmienić flagę kompilacji 
 Kolory oszukuję, nie robię jasnego i ciemnego tylko pogrubiam, bo jest jaśniej.
 Domyślny terminal daje zdefiniować 8 kolorów (ograniczenie stałej COLORS).
 
+Do wstawiania (argumenty) informacji do pamięci dziecka używam process_vm_writev,
+a do odczytywania (tekst do wyświetlenia) process_vm_readv.
+
+Wstawiając parametry do pamięci zakładam, że jest jedna sekcja .params i że są w takiej kolejności jak parametry podane.
+
+Program powinien skończyć działanie gdy dostanie:
+
+- Zabijemy rodzica
+- Dziecko skończy działanie
+- Dziecko zawoła syscall end
+- Argumenty nie będą liczbami, lub nie da się ich sparsować (np. za długie)
+- Któraś z kluczowych używanych funkcji skończy się niepowodzeniem
+- Inne
+
 Autor
 #####
 
